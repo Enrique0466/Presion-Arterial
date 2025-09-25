@@ -24,6 +24,17 @@
             <p class="text-sm sm:text-base text-gray-500">Mantén un control de tus mediciones de forma digital.</p>
         </header>
 
+        <div id="auth-controls" class="text-center mb-6 p-4 border rounded-lg bg-indigo-50">
+            <button id="btn-login-google" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Iniciar Sesión con Google 🔒
+            </button>
+            <div id="usuario-info" class="flex justify-between items-center hidden">
+                <p class="text-sm text-indigo-800">Bienvenido: <span id="nombre-usuario" class="font-bold"></span></p>
+                <button id="btn-logout" class="bg-red-500 text-white font-semibold py-1 px-3 text-sm rounded-md hover:bg-red-600 transition-colors duration-200">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
         <form id="bp-form" class="bg-gray-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
             <h2 class="text-lg sm:text-xl font-semibold mb-4">Añadir Nueva Medición</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -153,6 +164,10 @@
         </div>
     </div>
     
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
     <script>
         console.log("DEBUG: El script ha comenzado a ejecutarse.");
         
@@ -163,45 +178,202 @@
         let allRecords = [];
         let bpChart;
 
+        // Variables de Autenticación
+        const btnLogin = document.getElementById('btn-login-google');
+        const btnLogout = document.getElementById('btn-logout');
+        const userInfoDiv = document.getElementById('usuario-info');
+        const userNameSpan = document.getElementById('nombre-usuario');
+        let userID = null; // ID del usuario autenticado
+        
         // Variables para la API de Gemini
         const geminiAnalysisBtn = document.getElementById('gemini-analysis-btn');
         const geminiResultDiv = document.getElementById('gemini-result');
         const geminiLoadingDiv = document.getElementById('gemini-loading');
         
         // ¡REEMPLAZA ESTO CON TU CLAVE DE API DE GEMINI!
-        const apiKey = "AIzaSyCQ3CGbPXk6_hjQ8JcTK2i0GfXn2Wq6dag"; 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+        const apiKeyGemini = "AIzaSyBML7mKrFLM9a5twLNMm8YSn4_nwQh5Ies"; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyGemini}`;
 
-        // Función para guardar los registros en el almacenamiento local
-        function saveRecords() {
-            localStorage.setItem('bloodPressureRecords', JSON.stringify(allRecords));
-            console.log("Registros guardados en localStorage.");
-        }
+        // ====================================================================
+        // 1. CONFIGURACIÓN E INICIALIZACIÓN DE FIREBASE
+        // ====================================================================
 
-        // Función para cargar los registros del almacenamiento local
-        function loadRecords() {
-            const storedRecords = localStorage.getItem('bloodPressureRecords');
-            if (storedRecords) {
-                allRecords = JSON.parse(storedRecords);
-                console.log("Registros cargados de localStorage.");
+        // [¡IMPORTANTE! REEMPLAZA ESTOS VALORES CON LOS DE TU CONSOLA DE FIREBASE]
+        const firebaseConfig = {
+            apiKey: "AIzaSyClMSAysJoYHdoXCOUPsTy6d2sftpt5bdQ",
+            authDomain: "presion-arterial-0466.firebaseapp.com",
+            projectId: "presion-arterial-0466",
+            storageBucket: "presion-arterial-0466.firebasestorage.app",
+            messagingSenderId: "128897205607",
+            appId: "1:128897205607:web:e251f1208a951f39f9dbc2",
+            measurementId: "G-F346Q6E2F9"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); // Base de datos
+        const auth = firebase.auth();   // Autenticación
+
+        // Opcional: Persistencia offline
+        firebase.firestore().enablePersistence().catch(err => {
+            if (err.code === 'failed-precondition' || err.code === 'unimplemented') {
+                console.warn("Persistencia de datos no activada.");
             }
-            renderRecords(allRecords);
+        });
+
+        // ====================================================================
+        // 2. LÓGICA DE AUTENTICACIÓN (AUTH)
+        // ====================================================================
+
+        // Detector de cambio de estado de usuario
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Usuario logueado
+                userID = user.uid;
+                userNameSpan.textContent = user.displayName;
+                userInfoDiv.classList.remove('hidden');
+                btnLogin.classList.add('hidden');
+                
+                console.log("Usuario autenticado. Cargando datos...");
+                cargarTodosLosRegistros(userID); // Carga los datos específicos del usuario
+            } else {
+                // Usuario desconectado
+                userID = null;
+                allRecords = [];
+                userNameSpan.textContent = '';
+                userInfoDiv.classList.add('hidden');
+                btnLogin.classList.remove('hidden');
+
+                // Limpia la tabla y el gráfico
+                renderRecords(allRecords); 
+                console.log("Usuario desconectado. Datos limpiados.");
+                
+                // Ocultar el formulario si no está logueado (opcional, pero buena UX)
+                // document.getElementById('bp-form').style.display = 'none';
+            }
+        });
+
+        // Evento de Login
+        btnLogin.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .catch((error) => alert(`Error al iniciar sesión: ${error.message}`));
+        });
+
+        // Evento de Logout
+        btnLogout.addEventListener('click', () => {
+            auth.signOut().catch((error) => console.error("Error al cerrar sesión:", error));
+        });
+
+
+        // ====================================================================
+        // 3. LÓGICA DE BASE DE DATOS (FIREBASE FIRESTORE)
+        // ====================================================================
+
+        /**
+         * Guarda un nuevo registro en Firestore.
+         */
+        function guardarNuevaMedicion(nuevaMedicion) {
+            if (!userID) {
+                alert("Debes iniciar sesión para guardar datos.");
+                return;
+            }
+            
+            const registroConUsuario = {
+                ...nuevaMedicion,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                uid: userID // CLAVE: Asociamos el registro al usuario actual
+            };
+
+            db.collection("registrosPA").add(registroConUsuario)
+                .then(() => {
+                    console.log("Registro guardado con éxito.");
+                    // Vuelve a cargar los registros para actualizar la tabla
+                    cargarTodosLosRegistros(userID); 
+                    form.reset(); // Limpia el formulario
+                })
+                .catch((error) => {
+                    console.error("Error al guardar el documento:", error);
+                    alert("Error al guardar. Revisa la consola.");
+                });
         }
 
-        // Función para renderizar la tabla de registros
+        /**
+         * Carga todos los registros de Firestore del usuario actual.
+         */
+        function cargarTodosLosRegistros(currentUserID) {
+            if (!currentUserID) return;
+
+            db.collection("registrosPA")
+                // Filtra solo los registros con la UID del usuario actual
+                .where("uid", "==", currentUserID) 
+                // Ordena por la marca de tiempo (el registro más reciente primero)
+                .orderBy("timestamp", "desc") 
+                .get()
+                .then((querySnapshot) => {
+                    const registrosCargados = [];
+                    querySnapshot.forEach((doc) => {
+                        // El ID del documento de Firestore es necesario para eliminar
+                        const registroData = doc.data();
+                        registroData.id = doc.id; 
+                        registrosCargados.push(registroData);
+                    });
+                    
+                    // Llama a la función de renderizado con los datos de Firestore
+                    renderRecords(registrosCargados); 
+                })
+                .catch((error) => {
+                    console.error("Error al cargar los documentos:", error);
+                    alert("Error al cargar los registros.");
+                });
+        }
+
+        /**
+         * Elimina un registro de Firestore.
+         */
+        window.deleteRecord = function(docId) { // Ahora recibe el ID del documento, no el índice
+            if (!userID) {
+                alert("Debes iniciar sesión para eliminar datos.");
+                return;
+            }
+            if (confirm("¿Estás seguro de que quieres eliminar este registro?")) {
+                db.collection("registrosPA").doc(docId).delete()
+                    .then(() => {
+                        console.log("Documento eliminado con éxito.");
+                        cargarTodosLosRegistros(userID); // Recarga para actualizar
+                    })
+                    .catch((error) => {
+                        console.error("Error al eliminar el documento:", error);
+                        alert("Error al eliminar. Revisa la consola.");
+                    });
+            }
+        };
+
+
+        // ====================================================================
+        // 4. FUNCIONES EXISTENTES ADAPTADAS
+        // ====================================================================
+
+        // Función para renderizar la tabla de registros (ADAPTADA)
         function renderRecords(records) {
             console.log("Renderizando registros. Número de registros:", records.length);
-            allRecords = records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            // Ordenamos por fecha para el gráfico, pero para la tabla usamos el orden descendente de Firestore
+            allRecords = records.sort((a, b) => new Date(a.timestamp.toDate()) - new Date(b.timestamp.toDate()));
+
             recordsTableBody.innerHTML = '';
             
-            if (allRecords.length === 0) {
+            if (records.length === 0) {
                 noRecordsMessage.classList.remove('hidden');
             } else {
                 noRecordsMessage.classList.add('hidden');
-                allRecords.forEach((rec, index) => {
+                // IMPORTANTE: Iteramos sobre los records, no sobre allRecords, para mantener el orden de carga
+                records.forEach((rec) => {
+                    // Convertir el Timestamp de Firestore a objeto Date
+                    const dateObject = rec.timestamp ? rec.timestamp.toDate() : new Date(); 
+
+                    const formattedDate = dateObject.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                    const formattedTime = dateObject.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
                     const row = document.createElement('tr');
-                    const formattedDate = new Date(rec.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                    const formattedTime = new Date(rec.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
                     row.innerHTML = `
                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${formattedDate}<br>${formattedTime}</td>
                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${rec.arm}</td>
@@ -210,20 +382,24 @@
                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${rec.heartRate || '-'}</td>
                         <td class="px-3 py-2 text-sm text-gray-500">${rec.notes || '-'}</td>
                         <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                            <button class="text-red-600 hover:text-red-900" onclick="deleteRecord('${index}')">Eliminar</button>
+                            <button class="text-red-600 hover:text-red-900" onclick="deleteRecord('${rec.id}')">Eliminar</button>
                         </td>
                     `;
                     recordsTableBody.appendChild(row);
                 });
             }
-            // Llama a la función del gráfico aquí
             updateChart(allRecords);
         }
 
-        // Add a new record
+        // Add a new record (ADAPTADA para llamar a Firestore)
         function addRecord(event) {
             event.preventDefault();
             console.log("Intentando añadir un nuevo registro...");
+
+            if (!userID) {
+                alert("Debes iniciar sesión para guardar datos.");
+                return;
+            }
 
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
@@ -238,6 +414,7 @@
                 return;
             }
 
+            // Creamos un objeto con la estructura que subiremos a Firestore
             const record = {
                 date,
                 time,
@@ -246,26 +423,17 @@
                 diastolic,
                 heartRate,
                 notes,
-                timestamp: new Date(`${date}T${time}`).toISOString(),
+                // Nota: Usamos la fecha del formulario para que el usuario pueda introducir registros pasados
+                timestamp: new Date(`${date}T${time}`).toISOString(), 
             };
 
-            allRecords.push(record);
-            saveRecords();
-            renderRecords(allRecords);
-            form.reset();
+            // Llama a la nueva función de guardado en Firestore
+            guardarNuevaMedicion(record);
         }
 
-        // Delete a record
-        window.deleteRecord = function(index) {
-            if (confirm("¿Estás seguro de que quieres eliminar este registro?")) {
-                allRecords.splice(index, 1);
-                saveRecords();
-                renderRecords(allRecords);
-            }
-        };
-
-        // Export data to CSV
+        // Export data to CSV (Mantiene la misma lógica de exportación)
         function exportData() {
+            // ... (Tu función exportData es la misma) ...
             console.log("Intentando exportar datos a CSV...");
             if (allRecords.length === 0) {
                 alert('No hay registros para exportar.');
@@ -301,18 +469,21 @@
             console.log("Datos exportados con éxito.");
         }
 
-        // Update the chart
+        // Update the chart (ADAPTADA para manejar el objeto Timestamp de Firestore)
         function updateChart(records) {
             console.log("Actualizando el gráfico...");
-            const sortedRecords = records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            const labels = sortedRecords.map(rec => new Date(rec.timestamp).toLocaleDateString('es-ES'));
+            
+            // Usamos la propiedad 'timestamp.toDate()' para convertir el timestamp de Firestore
+            const sortedRecords = records.sort((a, b) => (a.timestamp ? a.timestamp.toDate() : new Date()) - (b.timestamp ? b.timestamp.toDate() : new Date()));
+
+            const labels = sortedRecords.map(rec => (rec.timestamp ? rec.timestamp.toDate() : new Date()).toLocaleDateString('es-ES'));
             const systolicData = sortedRecords.map(rec => rec.systolic);
             const diastolicData = sortedRecords.map(rec => rec.diastolic);
-        
+            
             if (bpChart) {
                 bpChart.destroy();
             }
-        
+            
             const ctx = document.getElementById('bp-chart').getContext('2d');
             bpChart = new Chart(ctx, {
                 type: 'line',
@@ -356,8 +527,9 @@
             console.log("Gráfico actualizado.");
         }
 
-        // Call Gemini API for analysis
+        // Call Gemini API for analysis (Mantiene la misma lógica de IA)
         async function getGeminiAnalysis() {
+            // ... (Tu función getGeminiAnalysis es la misma) ...
             console.log("Intentando obtener análisis de Gemini...");
             if (allRecords.length === 0) {
                 geminiResultDiv.textContent = "No hay registros para analizar. Por favor, añade algunas mediciones primero.";
@@ -370,10 +542,12 @@
             geminiResultDiv.classList.add('hidden');
             geminiResultDiv.textContent = '';
 
-            const last10Records = allRecords.slice(-10);
+            // Usamos la versión de allRecords ya ordenada temporalmente para el gráfico
+            const last10Records = allRecords.slice(-10); 
             const formattedRecords = last10Records.map(rec => {
-                const date = new Date(rec.timestamp).toLocaleDateString('es-ES');
-                const time = new Date(rec.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                const dateObject = rec.timestamp ? rec.timestamp.toDate() : new Date(); 
+                const date = dateObject.toLocaleDateString('es-ES');
+                const time = dateObject.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
                 return `Fecha: ${date} ${time}, Brazo: ${rec.arm}, Sistólica: ${rec.systolic}, Diastólica: ${rec.diastolic}, Notas: "${rec.notes}"`;
             }).join('\n');
 
@@ -420,8 +594,8 @@
         exportBtn.addEventListener('click', exportData);
         geminiAnalysisBtn.addEventListener('click', getGeminiAnalysis);
         
-        // Carga los registros al iniciar la página
-        window.onload = loadRecords;
+        // ¡QUITAMOS window.onload = loadRecords; y usamos onAuthStateChanged para cargar los datos!
+        // No hay código de carga aquí. El inicio de la aplicación se gestiona por auth.onAuthStateChanged
     </script>
 </body>
 </html>
