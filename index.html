@@ -197,17 +197,8 @@
         // ====================================================================
         // 1. CONFIGURACIÓN E INICIALIZACIÓN DE FIREBASE
         // ====================================================================
-
-        // [¡IMPORTANTE! REEMPLAZA ESTOS VALORES CON LOS DE TU CONSOLA DE FIREBASE]
-        const firebaseConfig = {
-            apiKey: "AIzaSyClMSAysJoYHdoXCOUPsTy6d2sftpt5bdQ",
-            authDomain: "presion-arterial-0466.firebaseapp.com",
-            projectId: "presion-arterial-0466",
-            storageBucket: "presion-arterial-0466.firebasestorage.app",
-            messagingSenderId: "128897205607",
-            appId: "1:128897205607:web:e251f1208a951f39f9dbc2",
-            measurementId: "G-F346Q6E2F9"
-        };
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const initialAuthToken = __initial_auth_token;
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(); // Base de datos
@@ -219,10 +210,16 @@
                 console.warn("Persistencia de datos no activada.");
             }
         });
-
+        
         // ====================================================================
         // 2. LÓGICA DE AUTENTICACIÓN (AUTH)
         // ====================================================================
+
+        // Inicia sesión automáticamente con el token proporcionado si existe.
+        if (initialAuthToken) {
+            auth.signInWithCustomToken(initialAuthToken)
+                .catch((error) => console.error("Error al iniciar sesión con token:", error));
+        }
 
         // Detector de cambio de estado de usuario
         auth.onAuthStateChanged((user) => {
