@@ -24,136 +24,147 @@
             <p class="text-sm sm:text-base text-gray-500">Mantén un control de tus mediciones de forma digital.</p>
         </header>
 
-        <div id="auth-info" class="text-center mb-6 p-4 border rounded-lg bg-indigo-50">
-            <p class="text-sm text-indigo-800">Bienvenido: <span id="nombre-usuario" class="font-bold"></span></p>
-        </div>
-        
-        <form id="bp-form" class="bg-gray-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
-            <h2 class="text-lg sm:text-xl font-semibold mb-4">Añadir Nueva Medición</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="col-span-1">
-                    <label for="date" class="block text-sm font-medium text-gray-700">Fecha</label>
-                    <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
-                </div>
-                <div class="col-span-1">
-                    <label for="time" class="block text-sm font-medium text-gray-700">Hora</label>
-                    <input type="time" id="time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
-                </div>
-                <div class="col-span-1">
-                    <label for="arm" class="block text-sm font-medium text-gray-700">Brazo</label>
-                    <select id="arm" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-white">
-                        <option value="Derecho">Derecho</option>
-                        <option value="Izquierdo">Izquierdo</option>
-                    </select>
-                </div>
-                <div class="col-span-1">
-                    <label for="systolic" class="block text-sm font-medium text-gray-700">Sistólica (mmHg)</label>
-                    <input type="number" id="systolic" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
-                </div>
-                <div class="col-span-1">
-                    <label for="diastolic" class="block text-sm font-medium text-gray-700">Diastólica (mmHg)</label>
-                    <input type="number" id="diastolic" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
-                </div>
-                <div class="col-span-1">
-                    <label for="heartRate" class="block text-sm font-medium text-gray-700">Frecuencia Cardíaca (BPM)</label>
-                    <input type="number" id="heartRate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
-                </div>
-            </div>
-            <div class="mt-4">
-                <label for="notes" class="block text-sm font-medium text-gray-700">Observaciones</label>
-                <textarea id="notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"></textarea>
-            </div>
-            <button type="submit" class="w-full mt-6 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Guardar Medición
-            </button>
-        </form>
-
-        <div class="bg-indigo-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
-            <h2 class="text-lg sm:text-xl font-semibold mb-4 text-indigo-800">Obtener Análisis con IA ✨</h2>
-            <p class="text-sm text-indigo-700 mb-4">Haz clic en el botón para recibir un análisis de tus últimas mediciones. Esta información es generada por IA y no sustituye el consejo médico.</p>
-            <button id="gemini-analysis-btn" class="w-full bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Analizar Mis Datos ✨
-            </button>
-            <div id="gemini-loading" class="mt-4 text-center hidden">
-                <svg class="animate-spin h-5 w-5 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-            <div id="gemini-result" class="mt-4 p-4 bg-white rounded-md border border-indigo-200 text-sm text-gray-800 hidden"></div>
+        <div id="loading-message" class="text-center p-8">
+            <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-gray-500">Cargando...</p>
         </div>
 
-        <div class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg mb-6">
-            <h3 class="text-base font-semibold mb-2">Rangos de Presión Arterial (Según AHA)</h3>
-            <table class="min-w-full divide-y divide-blue-200 text-sm">
-                <thead>
-                    <tr>
-                        <th class="px-2 py-1 text-left">Categoría</th>
-                        <th class="px-2 py-1 text-left">Sistólica (mmHg)</th>
-                        <th class="px-2 py-1 text-left">Diastólica (mmHg)</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-blue-200">
-                    <tr>
-                        <td class="px-2 py-1 text-blue-900 font-medium">Normal</td>
-                        <td class="px-2 py-1 text-blue-900 font-medium">Menos de 120</td>
-                        <td class="px-2 py-1 text-blue-900 font-medium">Y menos de 80</td>
-                    </tr>
-                    <tr>
-                        <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">Elevada</td>
-                        <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">120-129</td>
-                        <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">Y menos de 80</td>
-                    </tr>
-                    <tr>
-                        <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">Hipertensión Etapa 1</td>
-                        <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">130-139</td>
-                        <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">O 80-89</td>
-                    </tr>
-                    <tr>
-                        <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">Hipertensión Etapa 2</td>
-                        <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">140 o más</td>
-                        <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">O 90 o más</td>
-                    </tr>
-                    <tr>
-                        <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Crisis Hipertensiva</td>
-                        <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Más de 180</td>
-                        <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Y/o más de 120</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <div id="authenticated-content" class="hidden">
+            <div id="auth-info" class="text-center mb-6 p-4 border rounded-lg bg-indigo-50">
+                <p class="text-sm text-indigo-800">Bienvenido: <span id="nombre-usuario" class="font-bold"></span></p>
+                <p class="text-xs text-indigo-500 mt-1">ID de Usuario: <span id="user-id-display"></span></p>
+            </div>
+            
+            <form id="bp-form" class="bg-gray-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4">Añadir Nueva Medición</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="col-span-1">
+                        <label for="date" class="block text-sm font-medium text-gray-700">Fecha</label>
+                        <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="time" class="block text-sm font-medium text-gray-700">Hora</label>
+                        <input type="time" id="time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="arm" class="block text-sm font-medium text-gray-700">Brazo</label>
+                        <select id="arm" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-white">
+                            <option value="Derecho">Derecho</option>
+                            <option value="Izquierdo">Izquierdo</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1">
+                        <label for="systolic" class="block text-sm font-medium text-gray-700">Sistólica (mmHg)</label>
+                        <input type="number" id="systolic" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="diastolic" class="block text-sm font-medium text-gray-700">Diastólica (mmHg)</label>
+                        <input type="number" id="diastolic" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="heartRate" class="block text-sm font-medium text-gray-700">Frecuencia Cardíaca (BPM)</label>
+                        <input type="number" id="heartRate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" min="0">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Observaciones</label>
+                    <textarea id="notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"></textarea>
+                </div>
+                <button type="submit" class="w-full mt-6 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Guardar Medición
+                </button>
+            </form>
 
-        <div class="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm mb-6">
-            <h2 class="text-lg sm:text-xl font-semibold mb-4">Mis Registros</h2>
-            <div class="overflow-x-auto rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
+            <div class="bg-indigo-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4 text-indigo-800">Obtener Análisis con IA ✨</h2>
+                <p class="text-sm text-indigo-700 mb-4">Haz clic en el botón para recibir un análisis de tus últimas mediciones. Esta información es generada por IA y no sustituye el consejo médico.</p>
+                <button id="gemini-analysis-btn" class="w-full bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Analizar Mis Datos ✨
+                </button>
+                <div id="gemini-loading" class="mt-4 text-center hidden">
+                    <svg class="animate-spin h-5 w-5 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <div id="gemini-result" class="mt-4 p-4 bg-white rounded-md border border-indigo-200 text-sm text-gray-800 hidden"></div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg mb-6">
+                <h3 class="text-base font-semibold mb-2">Rangos de Presión Arterial (Según AHA)</h3>
+                <table class="min-w-full divide-y divide-blue-200 text-sm">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brazo</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sistólica</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Diastólica</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">FC</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Notas</th>
-                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
+                            <th class="px-2 py-1 text-left">Categoría</th>
+                            <th class="px-2 py-1 text-left">Sistólica (mmHg)</th>
+                            <th class="px-2 py-1 text-left">Diastólica (mmHg)</th>
                         </tr>
                     </thead>
-                    <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
-                        </tbody>
+                    <tbody class="divide-y divide-blue-200">
+                        <tr>
+                            <td class="px-2 py-1 text-blue-900 font-medium">Normal</td>
+                            <td class="px-2 py-1 text-blue-900 font-medium">Menos de 120</td>
+                            <td class="px-2 py-1 text-blue-900 font-medium">Y menos de 80</td>
+                        </tr>
+                        <tr>
+                            <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">Elevada</td>
+                            <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">120-129</td>
+                            <td class="px-2 py-1 text-yellow-800 bg-yellow-100 font-medium">Y menos de 80</td>
+                        </tr>
+                        <tr>
+                            <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">Hipertensión Etapa 1</td>
+                            <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">130-139</td>
+                            <td class="px-2 py-1 text-orange-800 bg-orange-100 font-medium">O 80-89</td>
+                        </tr>
+                        <tr>
+                            <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">Hipertensión Etapa 2</td>
+                            <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">140 o más</td>
+                            <td class="px-2 py-1 text-red-800 bg-red-100 font-medium">O 90 o más</td>
+                        </tr>
+                        <tr>
+                            <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Crisis Hipertensiva</td>
+                            <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Más de 180</td>
+                            <td class="px-2 py-1 text-red-900 bg-red-200 font-medium">Y/o más de 120</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-            <p id="no-records-message" class="text-gray-500 text-center mt-4 hidden">Aún no hay registros. ¡Añade tu primera medición!</p>
-        </div>
-        
-        <div class="mt-4 mb-6">
-            <button id="export-btn" class="w-full bg-emerald-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-emerald-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                Descargar Datos (.csv)
-            </button>
-        </div>
 
-        <div class="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm">
-            <h2 class="text-lg sm:text-xl font-semibold mb-4">Tendencia de Presión Arterial</h2>
-            <canvas id="bp-chart"></canvas>
+            <div class="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm mb-6">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4">Mis Registros</h2>
+                <div class="overflow-x-auto rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Brazo</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sistólica</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Diastólica</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">FC</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Notas</th>
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+                <p id="no-records-message" class="text-gray-500 text-center mt-4 hidden">Aún no hay registros. ¡Añade tu primera medición!</p>
+            </div>
+            
+            <div class="mt-4 mb-6">
+                <button id="export-btn" class="w-full bg-emerald-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-emerald-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    Descargar Datos (.csv)
+                </button>
+            </div>
+
+            <div class="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4">Tendencia de Presión Arterial</h2>
+                <canvas id="bp-chart"></canvas>
+            </div>
         </div>
     </div>
     
@@ -163,7 +174,10 @@
 
     <script>
         console.log("DEBUG: El script ha comenzado a ejecutarse.");
-        
+
+        // Referencias a elementos del DOM
+        const authenticatedContentDiv = document.getElementById('authenticated-content');
+        const loadingMessageDiv = document.getElementById('loading-message');
         const recordsTableBody = document.getElementById('records-table-body');
         const noRecordsMessage = document.getElementById('no-records-message');
         const exportBtn = document.getElementById('export-btn');
@@ -174,6 +188,7 @@
         // Variables de Autenticación
         const authInfoDiv = document.getElementById('auth-info');
         const userNameSpan = document.getElementById('nombre-usuario');
+        const userIdDisplaySpan = document.getElementById('user-id-display');
         let userID = null; // ID del usuario autenticado
         
         // Variables para la API de Gemini
@@ -207,25 +222,15 @@
         // 2. LÓGICA DE AUTENTICACIÓN (AUTH)
         // ====================================================================
 
-        // Inicia sesión automáticamente con el token proporcionado si existe, de lo contrario, de forma anónima.
-        async function authenticateAndLoad() {
-          try {
-              if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
-                  await auth.signInWithCustomToken(initialAuthToken);
-              } else {
-                  await auth.signInAnonymously();
-              }
-          } catch (error) {
-              console.error("Error en la autenticación:", error);
-          }
-        }
-        
         // Detector de cambio de estado de usuario
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Usuario logueado
+                // Usuario logueado, mostrar contenido
                 userID = user.uid;
-                userNameSpan.textContent = user.isAnonymous ? 'Usuario Anónimo' : user.displayName || 'Usuario';
+                userNameSpan.textContent = user.isAnonymous ? 'Usuario Anónimo' : (user.displayName || 'Usuario');
+                userIdDisplaySpan.textContent = user.uid;
+                loadingMessageDiv.classList.add('hidden');
+                authenticatedContentDiv.classList.remove('hidden');
                 console.log("Usuario autenticado. Cargando datos...");
                 cargarTodosLosRegistros(userID); // Carga los datos específicos del usuario
             } else {
@@ -233,13 +238,33 @@
                 userID = null;
                 allRecords = [];
                 userNameSpan.textContent = 'desconocido';
+                userIdDisplaySpan.textContent = 'desconocido';
+                loadingMessageDiv.classList.add('hidden');
+                authenticatedContentDiv.classList.remove('hidden');
                 console.log("Usuario desconectado. Datos limpiados.");
                 renderRecords(allRecords); // Limpia la tabla y el gráfico
             }
         });
-
+        
+        // Inicia sesión automáticamente con el token proporcionado si existe, de lo contrario, de forma anónima.
+        async function handleAuth() {
+            try {
+                if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
+                    await auth.signInWithCustomToken(initialAuthToken);
+                } else {
+                    await auth.signInAnonymously();
+                }
+            } catch (error) {
+                console.error("Error en la autenticación:", error);
+                // Si la autenticación falla, mostramos el contenido de todos modos para que el usuario pueda ver la app
+                loadingMessageDiv.classList.add('hidden');
+                authenticatedContentDiv.classList.remove('hidden');
+                alert("Error de autenticación. Es posible que no puedas guardar datos. Revisa la consola.");
+            }
+        }
+        
         // Llamada a la autenticación inicial
-        authenticateAndLoad();
+        handleAuth();
 
 
         // ====================================================================
@@ -251,7 +276,7 @@
          */
         function guardarNuevaMedicion(nuevaMedicion) {
             if (!userID) {
-                alert("Debes iniciar sesión para guardar datos.");
+                alert("Debes estar autenticado para guardar datos. Por favor, recarga la página.");
                 return;
             }
             
@@ -282,33 +307,28 @@
             const userRecordsRef = db.collection(`artifacts/${appId}/users/${currentUserID}/registrosPA`);
 
             userRecordsRef
-                // Ordena por la marca de tiempo (el registro más reciente primero)
                 .orderBy("timestamp", "desc") 
-                .get()
-                .then((querySnapshot) => {
+                .onSnapshot((querySnapshot) => {
                     const registrosCargados = [];
                     querySnapshot.forEach((doc) => {
-                        // El ID del documento de Firestore es necesario para eliminar
                         const registroData = doc.data();
                         registroData.id = doc.id; 
                         registrosCargados.push(registroData);
                     });
                     
-                    // Llama a la función de renderizado con los datos de Firestore
                     renderRecords(registrosCargados); 
-                })
-                .catch((error) => {
+                }, (error) => {
                     console.error("Error al cargar los documentos:", error);
-                    // Ocultamos el alert de error para no molestar al usuario con el error de permisos.
+                    // No mostramos un alert al usuario para evitar molestias, solo registramos el error en consola.
                 });
         }
 
         /**
          * Elimina un registro de Firestore.
          */
-        window.deleteRecord = function(docId) { // Ahora recibe el ID del documento, no el índice
+        window.deleteRecord = function(docId) { 
             if (!userID) {
-                alert("Debes iniciar sesión para eliminar datos.");
+                alert("Debes estar autenticado para eliminar datos.");
                 return;
             }
             if (confirm("¿Estás seguro de que quieres eliminar este registro?")) {
@@ -316,7 +336,6 @@
                 docRef.delete()
                     .then(() => {
                         console.log("Documento eliminado con éxito.");
-                        cargarTodosLosRegistros(userID); // Recarga para actualizar
                     })
                     .catch((error) => {
                         console.error("Error al eliminar el documento:", error);
@@ -330,11 +349,9 @@
         // 4. FUNCIONES EXISTENTES ADAPTADAS
         // ====================================================================
 
-        // Función para renderizar la tabla de registros (ADAPTADA)
         function renderRecords(records) {
             console.log("Renderizando registros. Número de registros:", records.length);
-            // Ordenamos por fecha para el gráfico, pero para la tabla usamos el orden descendente de Firestore
-            allRecords = records.sort((a, b) => new Date(a.timestamp.toDate()) - new Date(b.timestamp.toDate()));
+            allRecords = records.sort((a, b) => (a.timestamp ? a.timestamp.toDate() : new Date()) - (b.timestamp ? b.timestamp.toDate() : new Date()));
 
             recordsTableBody.innerHTML = '';
             
@@ -342,11 +359,8 @@
                 noRecordsMessage.classList.remove('hidden');
             } else {
                 noRecordsMessage.classList.add('hidden');
-                // IMPORTANTE: Iteramos sobre los records, no sobre allRecords, para mantener el orden de carga
                 records.forEach((rec) => {
-                    // Convertir el Timestamp de Firestore a objeto Date
                     const dateObject = rec.timestamp ? rec.timestamp.toDate() : new Date(); 
-
                     const formattedDate = dateObject.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
                     const formattedTime = dateObject.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
@@ -368,14 +382,12 @@
             updateChart(allRecords);
         }
 
-        // Add a new record (ADAPTADA para llamar a Firestore)
         function addRecord(event) {
             event.preventDefault();
             console.log("Intentando añadir un nuevo registro...");
 
             if (!userID) {
-                // Ya no debería pasar, pero como fallback de seguridad
-                alert("Debes iniciar sesión para guardar datos.");
+                alert("No se pudo guardar el registro. Por favor, asegúrate de que estás autenticado. Intenta recargar la página.");
                 return;
             }
 
@@ -392,7 +404,6 @@
                 return;
             }
 
-            // Creamos un objeto con la estructura que subiremos a Firestore
             const record = {
                 date,
                 time,
@@ -401,17 +412,13 @@
                 diastolic,
                 heartRate,
                 notes,
-                // Nota: Usamos la fecha del formulario para que el usuario pueda introducir registros pasados
                 timestamp: new Date(`${date}T${time}`).toISOString(), 
             };
 
-            // Llama a la nueva función de guardado en Firestore
             guardarNuevaMedicion(record);
         }
 
-        // Export data to CSV (Mantiene la misma lógica de exportación)
         function exportData() {
-            // ... (Tu función exportData es la misma) ...
             console.log("Intentando exportar datos a CSV...");
             if (allRecords.length === 0) {
                 alert('No hay registros para exportar.');
@@ -447,11 +454,9 @@
             console.log("Datos exportados con éxito.");
         }
 
-        // Update the chart (ADAPTADA para manejar el objeto Timestamp de Firestore)
         function updateChart(records) {
             console.log("Actualizando el gráfico...");
             
-            // Usamos la propiedad 'timestamp.toDate()' para convertir el timestamp de Firestore
             const sortedRecords = records.sort((a, b) => (a.timestamp ? a.timestamp.toDate() : new Date()) - (b.timestamp ? b.timestamp.toDate() : new Date()));
 
             const labels = sortedRecords.map(rec => (rec.timestamp ? rec.timestamp.toDate() : new Date()).toLocaleDateString('es-ES'));
@@ -505,9 +510,7 @@
             console.log("Gráfico actualizado.");
         }
 
-        // Call Gemini API for analysis (Mantiene la misma lógica de IA)
         async function getGeminiAnalysis() {
-            // ... (Tu función getGeminiAnalysis es la misma) ...
             console.log("Intentando obtener análisis de Gemini...");
             if (allRecords.length === 0) {
                 geminiResultDiv.textContent = "No hay registros para analizar. Por favor, añade algunas mediciones primero.";
@@ -520,7 +523,6 @@
             geminiResultDiv.classList.add('hidden');
             geminiResultDiv.textContent = '';
 
-            // Usamos la versión de allRecords ya ordenada temporalmente para el gráfico
             const last10Records = allRecords.slice(-10); 
             const formattedRecords = last10Records.map(rec => {
                 const dateObject = rec.timestamp ? rec.timestamp.toDate() : new Date(); 
