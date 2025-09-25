@@ -24,17 +24,10 @@
             <p class="text-sm sm:text-base text-gray-500">Mantén un control de tus mediciones de forma digital.</p>
         </header>
 
-        <div id="auth-controls" class="text-center mb-6 p-4 border rounded-lg bg-indigo-50">
-            <button id="btn-login-google" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Iniciar Sesión con Google 🔒
-            </button>
-            <div id="usuario-info" class="flex justify-between items-center hidden">
-                <p class="text-sm text-indigo-800">Bienvenido: <span id="nombre-usuario" class="font-bold"></span></p>
-                <button id="btn-logout" class="bg-red-500 text-white font-semibold py-1 px-3 text-sm rounded-md hover:bg-red-600 transition-colors duration-200">
-                    Cerrar Sesión
-                </button>
-            </div>
+        <div id="auth-info" class="text-center mb-6 p-4 border rounded-lg bg-indigo-50">
+            <p class="text-sm text-indigo-800">Bienvenido: <span id="nombre-usuario" class="font-bold"></span></p>
         </div>
+        
         <form id="bp-form" class="bg-gray-50 p-4 sm:p-6 rounded-lg mb-6 shadow-sm">
             <h2 class="text-lg sm:text-xl font-semibold mb-4">Añadir Nueva Medición</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -179,9 +172,7 @@
         let bpChart;
 
         // Variables de Autenticación
-        const btnLogin = document.getElementById('btn-login-google');
-        const btnLogout = document.getElementById('btn-logout');
-        const userInfoDiv = document.getElementById('usuario-info');
+        const authInfoDiv = document.getElementById('auth-info');
         const userNameSpan = document.getElementById('nombre-usuario');
         let userID = null; // ID del usuario autenticado
         
@@ -191,7 +182,7 @@
         const geminiLoadingDiv = document.getElementById('gemini-loading');
         
         // ¡REEMPLAZA ESTO CON TU CLAVE DE API DE GEMINI!
-        const apiKeyGemini = "AIzaSyBML7mKrFLM9a5twLNMm8YSn4_nwQh5Ies"; 
+        const apiKeyGemini = ""; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyGemini}`;
 
         // ====================================================================
@@ -234,39 +225,17 @@
             if (user) {
                 // Usuario logueado
                 userID = user.uid;
-                userNameSpan.textContent = user.displayName || 'Usuario anónimo';
-                userInfoDiv.classList.remove('hidden');
-                btnLogin.classList.add('hidden');
-                
+                userNameSpan.textContent = user.isAnonymous ? 'Usuario Anónimo' : user.displayName || 'Usuario';
                 console.log("Usuario autenticado. Cargando datos...");
                 cargarTodosLosRegistros(userID); // Carga los datos específicos del usuario
             } else {
                 // Usuario desconectado
                 userID = null;
                 allRecords = [];
-                userNameSpan.textContent = '';
-                userInfoDiv.classList.add('hidden');
-                btnLogin.classList.remove('hidden');
-
-                // Limpia la tabla y el gráfico
-                renderRecords(allRecords); 
+                userNameSpan.textContent = 'desconocido';
                 console.log("Usuario desconectado. Datos limpiados.");
-                
-                // Ocultar el formulario si no está logueado (opcional, pero buena UX)
-                // document.getElementById('bp-form').style.display = 'none';
+                renderRecords(allRecords); // Limpia la tabla y el gráfico
             }
-        });
-
-        // Evento de Login
-        btnLogin.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .catch((error) => alert(`Error al iniciar sesión: ${error.message}`));
-        });
-
-        // Evento de Logout
-        btnLogout.addEventListener('click', () => {
-            auth.signOut().catch((error) => console.error("Error al cerrar sesión:", error));
         });
 
         // Llamada a la autenticación inicial
@@ -330,7 +299,7 @@
                 })
                 .catch((error) => {
                     console.error("Error al cargar los documentos:", error);
-                    alert("Error al cargar los registros.");
+                    // Ocultamos el alert de error para no molestar al usuario con el error de permisos.
                 });
         }
 
@@ -405,6 +374,7 @@
             console.log("Intentando añadir un nuevo registro...");
 
             if (!userID) {
+                // Ya no debería pasar, pero como fallback de seguridad
                 alert("Debes iniciar sesión para guardar datos.");
                 return;
             }
@@ -601,9 +571,6 @@
         form.addEventListener('submit', addRecord);
         exportBtn.addEventListener('click', exportData);
         geminiAnalysisBtn.addEventListener('click', getGeminiAnalysis);
-        
-        // ¡QUITAMOS window.onload = loadRecords; y usamos onAuthStateChanged para cargar los datos!
-        // No hay código de carga aquí. El inicio de la aplicación se gestiona por auth.onAuthStateChanged
     </script>
 </body>
 </html>
