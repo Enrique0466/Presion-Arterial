@@ -199,7 +199,8 @@
         // ====================================================================
         const firebaseConfig = JSON.parse(__firebase_config);
         const initialAuthToken = __initial_auth_token;
-        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(); // Base de datos
         const auth = firebase.auth();   // Autenticación
@@ -215,18 +216,25 @@
         // 2. LÓGICA DE AUTENTICACIÓN (AUTH)
         // ====================================================================
 
-        // Inicia sesión automáticamente con el token proporcionado si existe.
-        if (initialAuthToken) {
-            auth.signInWithCustomToken(initialAuthToken)
-                .catch((error) => console.error("Error al iniciar sesión con token:", error));
+        // Inicia sesión automáticamente con el token proporcionado si existe, de lo contrario, de forma anónima.
+        async function authenticateAndLoad() {
+          try {
+              if (typeof initialAuthToken !== 'undefined' && initialAuthToken) {
+                  await auth.signInWithCustomToken(initialAuthToken);
+              } else {
+                  await auth.signInAnonymously();
+              }
+          } catch (error) {
+              console.error("Error en la autenticación:", error);
+          }
         }
-
+        
         // Detector de cambio de estado de usuario
         auth.onAuthStateChanged((user) => {
             if (user) {
                 // Usuario logueado
                 userID = user.uid;
-                userNameSpan.textContent = user.displayName;
+                userNameSpan.textContent = user.displayName || 'Usuario anónimo';
                 userInfoDiv.classList.remove('hidden');
                 btnLogin.classList.add('hidden');
                 
@@ -261,6 +269,9 @@
             auth.signOut().catch((error) => console.error("Error al cerrar sesión:", error));
         });
 
+        // Llamada a la autenticación inicial
+        authenticateAndLoad();
+
 
         // ====================================================================
         // 3. LÓGICA DE BASE DE DATOS (FIREBASE FIRESTORE)
@@ -278,14 +289,13 @@
             const registroConUsuario = {
                 ...nuevaMedicion,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                uid: userID // CLAVE: Asociamos el registro al usuario actual
             };
 
-            db.collection("registrosPA").add(registroConUsuario)
+            const userRecordsRef = db.collection(`artifacts/${appId}/users/${userID}/registrosPA`);
+
+            userRecordsRef.add(registroConUsuario)
                 .then(() => {
                     console.log("Registro guardado con éxito.");
-                    // Vuelve a cargar los registros para actualizar la tabla
-                    cargarTodosLosRegistros(userID); 
                     form.reset(); // Limpia el formulario
                 })
                 .catch((error) => {
@@ -300,9 +310,9 @@
         function cargarTodosLosRegistros(currentUserID) {
             if (!currentUserID) return;
 
-            db.collection("registrosPA")
-                // Filtra solo los registros con la UID del usuario actual
-                .where("uid", "==", currentUserID) 
+            const userRecordsRef = db.collection(`artifacts/${appId}/users/${currentUserID}/registrosPA`);
+
+            userRecordsRef
                 // Ordena por la marca de tiempo (el registro más reciente primero)
                 .orderBy("timestamp", "desc") 
                 .get()
@@ -333,7 +343,8 @@
                 return;
             }
             if (confirm("¿Estás seguro de que quieres eliminar este registro?")) {
-                db.collection("registrosPA").doc(docId).delete()
+                const docRef = db.collection(`artifacts/${appId}/users/${userID}/registrosPA`).doc(docId);
+                docRef.delete()
                     .then(() => {
                         console.log("Documento eliminado con éxito.");
                         cargarTodosLosRegistros(userID); // Recarga para actualizar
@@ -596,3 +607,4 @@
     </script>
 </body>
 </html>
+
